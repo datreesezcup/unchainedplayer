@@ -46,7 +46,7 @@ class MediaPlayerScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(5),
                     ),
                     child: hasMedia ? CachedNetworkImage(
-                      imageUrl: master.mediaItem.artUri,
+                      imageUrl: master.mediaItem.artUri.toString(),
                       useOldImageOnUrlChange: true,
                       fit: BoxFit.cover,
                     ) : Center(
@@ -174,7 +174,7 @@ class MiniMediaPlayerWidget extends StatelessWidget {
                 children: [
                   if(hasMedia)
                     CachedNetworkImage(
-                      imageUrl: master.mediaItem.artUri,
+                      imageUrl: master.mediaItem.artUri.toString(),
                       width: 100,
                       fit: BoxFit.fitHeight,
                     )

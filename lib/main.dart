@@ -5,7 +5,6 @@ import 'package:audio_service/audio_service.dart';
 import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:unchainedplayer/controllers/audio_master.dart';
 import 'package:unchainedplayer/globals.dart';
 import 'package:unchainedplayer/screens/settings/app_settings_screen.dart';
@@ -66,9 +65,6 @@ class _MyHomePageState extends State<MyHomePage> {
   AudioMasterController master = Get.put(AudioMasterController());
 
 
-
-  PanelController _panelController;// = PanelController();
-
   WeSlideController _slideController = WeSlideController();
 
   PageController _pageController = PageController(
@@ -116,100 +112,6 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose(){
     _playerActiveStream.cancel();
     super.dispose();
-  }
-
-  Widget _buildSlidingUpPanel(BuildContext context, AudioMasterController master){
-    return SlidingUpPanel(
-      maxHeight: MediaQuery.of(context).size.height,
-      boxShadow: [],
-      margin: EdgeInsets.only(bottom: kBottomNavigationBarHeight),
-      controller: _panelController,
-      renderPanelSheet: false,
-      panelSnapping: true,
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (int newPage){
-          setState(() {
-            bBarIndex = newPage;
-          });
-        },
-        children: [
-          MediaSearchScreen(),
-          Scaffold(
-            appBar: AppBar(
-              title: Text("My Media"),
-              actions: [
-                IconButton(
-                  icon: Icon(Icons.stop),
-                  onPressed: (){
-                    AudioService.stop();
-                  },
-                ),
-                IconButton(
-                  icon: Icon(Icons.settings),
-                  onPressed: (){
-                    Get.to(AppSettingsScreen());
-                  },
-                )
-              ],
-            ),
-            bottomNavigationBar: BottomNavigationBar(
-              currentIndex: bBarIndex,
-              showUnselectedLabels: false,
-              onTap: (int newVal){
-                setState(() {
-                  bBarIndex = newVal;
-                  _pageController.animateToPage(newVal,
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeInOut
-                  );
-                });
-              },
-              items: [
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.search_outlined),
-                    activeIcon: Icon(Icons.search_rounded),
-                    label: "Search"
-                ),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.music_note_outlined),
-                    activeIcon: Icon(Icons.music_note_rounded),
-                    label: "Media"
-                ),
-                BottomNavigationBarItem(
-                    icon: Icon(Icons.playlist_play_outlined),
-                    activeIcon: Icon(Icons.playlist_play_rounded),
-                    label: "Playlists"
-                )
-              ],
-            ),
-            body: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              itemCount: AudioPlaylist.masterPlaylist.length,
-              itemBuilder: (BuildContext context, int index){
-                AudioCursor cursor = AudioPlaylist.masterPlaylist[index];
-
-
-                return GestureDetector(
-                  onTap: (){
-                    master.playPlaylistItem(AudioPlaylist.masterPlaylist, index);
-                  },
-                  child: MediaListItem(
-                    source: cursor,
-                    isSaved: true,
-                  ),
-
-                );
-              },
-            ),
-          ),
-          PlaylistViewerScreen(
-            playlists: AudioPlaylist.userPlaylists,
-          )
-        ],
-      ),
-      panelBuilder: (ScrollController c) => MediaPlayerScreen(),
-    );
   }
 
   Widget _buildWeSlidePanel(BuildContext context){

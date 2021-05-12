@@ -8,7 +8,7 @@ import 'dart:convert' show json;
 
 export 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
-class YoutubeMediaSource extends MediaSource implements IndirectCursorSource {
+class YoutubeMediaSource extends MediaSource implements IndirectCursorSource, IRequiresPreparationForSearch {
 
   @override
   String get name => "Youtube";
@@ -18,13 +18,15 @@ class YoutubeMediaSource extends MediaSource implements IndirectCursorSource {
 
   const YoutubeMediaSource();
 
-  static Stream<AudioCursor> _memorizedStream;
+  static SearchList _memorizedStream;
   static String _lastQuery;
+
+  static SearchList _searchList;
 
   @override
   Future<List<String>> getAutoCompleteSuggestions(String query) async {
     String url = "http://suggestqueries.google.com/complete/search?client=youtube&ds=yt&alt=json&q=${Uri.encodeComponent(query)}";
-    var response = await http.get(url);
+    var response = await http.get(Uri.parse(url));
     if(response.statusCode != 200){
       throw Exception("Bad status code: ${response.statusCode}");
     }
@@ -46,42 +48,58 @@ class YoutubeMediaSource extends MediaSource implements IndirectCursorSource {
     );
   }
 
-  Stream<AudioCursor> getVideos(String query) async* {
-    YoutubeExplode yt;
-    try{
-       yt = YoutubeExplode();
-       await for(Video v in yt.search.getVideos(query)){
-         yield IndirectAudioCursor(
-            title: v.title,
-            artist: v.author,
-            sourceID: v.id.value,
-            thumbnail: v.thumbnails.lowResUrl,
-            uploadDate: v.uploadDate,
-            provider: "youtube",
-            filepath: v.url,
-            duration: v.duration.inMilliseconds
-        );
-      }
-      /*
-      return _memorizedStream = yt.search.getVideos(query).map<AudioCursor>((Video v) {
-        return IndirectAudioCursor(
-          title: v.title,
-          artist: v.author,
-          sourceID: v.id.value,
-          thumbnail: v.thumbnails.lowResUrl,
-          uploadDate: v.uploadDate,
-          provider: "youtube",
-          filepath: v.url,
-          duration: v.duration.inMilliseconds
-        );
-      }).asBroadcastStream();*/
+  @override
+  Future<void> prepareSearch(String query) async {
+    _searchList = await YoutubeExplode().search.getVideos(query);
+  }
+
+  AudioCursor _convertYoutubeVideotoUnchained(Video vid){
+    return IndirectAudioCursor(
+      title: vid.title,
+      artist: vid.author,
+      sourceID: vid.id.value,
+      provider: name,
+      duration: vid.duration.inMilliseconds,
+      filepath: vid.id.value
+    );
+  }
+
+  Future<SearchedVideoProvider<Video>> getVideosForSearch(String query) async {
+
+    var searchList = await YoutubeExplode().search.getVideos(query);
+
+    SearchedVideoProvider<Video> searchProvider = SearchedVideoProvider(
+      query: query,
+      firstPageResult: searchList.map<AudioCursor>(_convertYoutubeVideotoUnchained).toList(),
+      tracker: searchList
+    );
+
+    searchProvider.setPageGetterFunction((query, page, tracker) {
+      return (tracker as SearchList).nextPage() ?? [];
+    });
+
+    searchProvider.setVideoTypeConvertFunc(_convertYoutubeVideotoUnchained);
+
+    List<Video> _vids;
+    if(page == 1){
+      _vids = _searchList.toList();
     }
-    catch (e) {
-      rethrow;
+    else{
+      _vids = (await _searchList.nextPage()).toList();
     }
-    finally{
-      yt?.close();
-    }
+
+    return _vids.map((v) => IndirectAudioCursor(
+        title: v.title,
+        artist: v.author,
+        sourceID: v.id.value,
+        thumbnail: v.thumbnails.lowResUrl,
+        uploadDate: v.uploadDate,
+        provider: "youtube",
+        filepath: v.url,
+        duration: v.duration.inMilliseconds
+    )).toList();
+
+
   }
 
   void printVideoData(Video data) async {
@@ -95,3 +113,4 @@ class YoutubeMediaSource extends MediaSource implements IndirectCursorSource {
     //yt.close();
   }
 }
+

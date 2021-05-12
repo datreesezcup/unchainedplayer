@@ -30,7 +30,7 @@ class QueueDrawer extends StatelessWidget {
                   decoration: BoxDecoration(
                       color: Theme.of(context).accentColor.withAlpha(240),
                       image: hasMedia ? DecorationImage(
-                          image: CachedNetworkImageProvider(currentItem.artUri),
+                          image: CachedNetworkImageProvider(currentItem.artUri.toString()),
                           fit: BoxFit.cover,
                           colorFilter: ColorFilter.mode(Colors.black54, BlendMode.srcOver)
                       ) : null

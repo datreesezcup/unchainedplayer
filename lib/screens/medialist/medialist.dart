@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,25 +8,25 @@ import 'package:unchainedplayer/types/audio_cursor.dart';
 import 'package:unchainedplayer/types/audio_interfaces.dart';
 import 'package:unchainedplayer/types/mediasource/baseMediaSource.dart';
 import 'package:unchainedplayer/widgets/easyDialog.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'widgets/mediaListItem.dart';
 
 class MediaListScreen extends StatefulWidget {
-
-  final Stream<AudioCursor> mediaStream;
 
   final AudioPlaylist playlist;
 
   final MediaSource cursorSource;
 
-  MediaListScreen._({this.cursorSource, this.mediaStream, this.playlist});
+  MediaListScreen._({this.cursorSource, this.playlist});
 
   factory MediaListScreen.playlist({@required AudioPlaylist playlist}) {
     return MediaListScreen._(playlist: playlist);
   }
 
-  factory MediaListScreen.cursorStream({@required MediaSource source, @required Stream<AudioCursor> stream}){
-    return MediaListScreen._(cursorSource: source, mediaStream: stream.asBroadcastStream());
+  factory MediaListScreen.sourceSearch({@required MediaSource source}){
+    return MediaListScreen._(cursorSource: source);
   }
+
 
   @override
   _MediaListScreenState createState() {
@@ -35,7 +34,7 @@ class MediaListScreen extends StatefulWidget {
       return _AudioPlaylistScreenState();
     }
     else{
-      return _CursorStreamScreenState();
+      return _SourceSearchScreenState();
     }
   }
 }
@@ -231,48 +230,21 @@ class _AudioPlaylistScreenState extends _MediaListScreenState {
   }
 }
 
-class _CursorStreamScreenState extends _MediaListScreenState {
+class _SourceSearchScreenState extends _MediaListScreenState {
 
-  bool _requestingItems = false;
-  bool _finishedLoading = false;
 
-  int _page = 0;
+  PagingController<int, Video> _pagingController = PagingController(firstPageKey: 1);
 
   AudioMasterController audioMasterController = Get.find();
 
-  StreamController<List<AudioCursor>> _cursorStream = StreamController<
-      List<AudioCursor>>();
-  List<AudioCursor> _cursors = List<AudioCursor>();
+  void requestNextPage(int page) async {
 
-  void requestNextPage() async {
-    if (_finishedLoading || _requestingItems) {
-      return;
-    }
-    _requestingItems = true;
-    List<AudioCursor> newCursors = await widget.mediaStream.skip(10 * _page)
-        .take(10)
-        .toList();
-    _cursors.addAll(newCursors);
-    if(!_cursorStream.isClosed) {
-      _cursorStream.add(_cursors);
-    }
-    _page++;
-
-    if (newCursors.length < 10) {
-      setState(() {
-        _finishedLoading = true;
-      });
-    }
-
-    _requestingItems = false;
   }
 
   @override
   void initState() {
     super.initState();
-    if(_page == 0){
-      requestNextPage();
-    }
+    _pagingController.addPageRequestListener(requestNextPage);
   }
 
   @override

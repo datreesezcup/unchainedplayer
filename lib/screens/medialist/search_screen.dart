@@ -62,7 +62,7 @@ class MediaSearchScreen extends StatelessWidget {
           if(search.isSearchingVideos && !search.isEditingText){
             return MediaListScreen.cursorStream(
                 source: YoutubeMediaSource(),
-                stream: YoutubeMediaSource().getVideos(search.query)
+                stream: YoutubeMediaSource().getVideosForSearch(search.query)
             );
           }
           else{

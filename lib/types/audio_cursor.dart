@@ -105,7 +105,7 @@ class AudioCursor {
       id: id,
       playable: true,
       artist: artist,
-      artUri: thumbnail,
+      artUri: Uri.parse(thumbnail),
       album: album ?? provider,
       duration: duration,
       extras: { "path": filePath, "clipStart": _clipStart, "clipEnd": _clipEnd }

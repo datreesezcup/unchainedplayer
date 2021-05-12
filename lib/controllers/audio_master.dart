@@ -496,7 +496,7 @@ class AudioBackgroundTask extends BackgroundAudioTask {
           title: mediaItem.title,
           artist: mediaItem.artist,
           album: mediaItem.album,
-          thumbnail: mediaItem.artUri
+          thumbnail: mediaItem.artUri.toString()
         );
       }
 
@@ -804,7 +804,7 @@ class AudioBackgroundTask extends BackgroundAudioTask {
     try {
       if (_skipState != null) return _skipState;
       switch (player.processingState) {
-        case ProcessingState.none:
+        case ProcessingState.idle:
           return AudioProcessingState.stopped;
         case ProcessingState.loading:
           return AudioProcessingState.connecting;
@@ -843,7 +843,7 @@ class AudioBackgroundTask extends BackgroundAudioTask {
         children: _currentQueue.map<AudioSource>((MediaItem item) => _coaxSingleMediaItem(item)).toList(),
         useLazyPreparation: true
       );
-      return player.load(_currentAudioSourceList, initialIndex: index);
+      return player.setAudioSource(_currentAudioSourceList, initialIndex: index);
     }catch(e, s){
       _printMethodError("_loadMedia", e, s);
     }

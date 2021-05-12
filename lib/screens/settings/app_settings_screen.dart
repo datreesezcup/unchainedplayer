@@ -73,6 +73,14 @@ class AppSettingsScreen extends StatelessWidget {
                   }
                 }
               },
+            ),
+            SliderModalSettingsTile(
+              title: "Theme Color Hue",
+              settingKey: SettingKeys.THEME_COLOR_HUE,
+              defaultValue: 206,
+              min: 0,
+              max: 360,
+              step: 1,
             )
           ],
         ),
